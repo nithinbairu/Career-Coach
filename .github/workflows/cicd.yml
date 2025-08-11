@@ -44,16 +44,12 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          docker --version
-      - name: Pull Docker image
-        run: docker pull nithinbairu/ai-career-coach:latest
-      - name: Stop and remove existing Docker container
-        run: docker rm -f ai-career-coach-container
-      - name: Run Docker container
-        run: docker run -d -p 3000:3000 --name ai-career-coach-container nithinbairu/ai-career-coach
+       - name: Check Docker access
+         run: docker info
+       - name: Pull Docker image
+         run: docker pull nithinbairu/ai-career-coach:latest
+       - name: Stop and remove existing Docker container
+         run: docker rm -f ai-career-coach-container || true
+       - name: Run Docker container
+         run: docker run -d -p 3000:3000 --name ai-career-coach-container nithinbairu/ai-career-coach
+# The docker info step will fail if permissions are incorrect, giving you an early signal.
