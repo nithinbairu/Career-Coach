@@ -2,7 +2,7 @@ name: Deploy Ai-Career-Coach to AWS EC2
 
 on:
   push:
-    branches: [ master]
+    branches: [ master ]
 
 jobs:
   build:
@@ -34,22 +34,27 @@ jobs:
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
 
       - name: Build Docker image
-        run: docker build -t nithinbairu/ai-career-coach .
+        run: sudo docker build -t nithinbairu/ai-career-coach .
+
       - name: Log in to Docker Hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Push Docker image to Docker Hub
-        run: docker push nithinbairu/ai-career-coach:latest
+        run: sudo docker push nithinbairu/ai-career-coach:latest
 
   Deploy:
     needs: build
     runs-on: self-hosted
+
     steps:
-       - name: Check Docker access
-         run: docker info
-       - name: Pull Docker image
-         run: docker pull nithinbairu/ai-career-coach:latest
-       - name: Stop and remove existing Docker container
-         run: docker rm -f ai-career-coach-container || true
-       - name: Run Docker container
-         run: docker run -d -p 3000:3000 --name ai-career-coach-container nithinbairu/ai-career-coach
-# The docker info step will fail if permissions are incorrect, giving you an early signal.
+      - name: Check Docker access
+        run: sudo docker info
+
+      - name: Pull Docker image
+        run: sudo docker pull nithinbairu/ai-career-coach:latest
+
+      - name: Stop and remove existing Docker container
+        run: sudo docker rm -f ai-career-coach-container || true
+
+      - name: Run Docker container
+        run: sudo docker run -d -p 3000:3000 --name ai-career-coach-container nithinbairu/ai-career-coach
