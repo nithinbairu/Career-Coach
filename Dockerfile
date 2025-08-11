@@ -5,13 +5,12 @@ WORKDIR /app
 # Install dependencies
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm ci --only=production
+RUN npm ci 
 RUN npx prisma generate
 
 # Copy all files
 COPY . .
 
-# Pass environment variables for Next.js build
 ARG DATABASE_URL
 ARG CLERK_SECRET_KEY
 ARG GEMINI_API_KEY
@@ -24,14 +23,7 @@ ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL
 ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL
 ARG SITE_URL
 
-RUN npm run build
-
-# 2. Production Stage
-FROM node:20-alpine AS runner
-WORKDIR /app
-
 ENV NODE_ENV=production
-# Runtime env vars
 ENV DATABASE_URL=$DATABASE_URL
 ENV CLERK_SECRET_KEY=$CLERK_SECRET_KEY
 ENV GEMINI_API_KEY=$GEMINI_API_KEY
