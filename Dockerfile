@@ -13,7 +13,8 @@ FROM node:18-alpine
 WORKDIR /app
 
 COPY --from=builder /app/package*.json ./
-RUN npm install --production
+COPY --from=builder /app/package-lock.json ./
+RUN npm ci --only=production
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
