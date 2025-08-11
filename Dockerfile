@@ -1,35 +1,54 @@
-# Stage 1: Build
-FROM node:18-alpine AS builder
+# 1. Build Stage
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files first (for better caching)
+# Install dependencies
 COPY package*.json ./
-
-# Copy prisma schema so prisma generate works on npm ci / postinstall
 COPY prisma ./prisma
-
-# Install dependencies (runs postinstall -> prisma generate)
 RUN npm ci
+RUN npx prisma generate
 
-# Copy rest of the app source code
+# Copy all files
 COPY . .
 
-# Build Next.js app
+# Pass environment variables for Next.js build
+ARG DATABASE_URL
+ARG CLERK_SECRET_KEY
+ARG GEMINI_API_KEY
+ARG INNGEST_EVENT_KEY
+ARG INNGEST_SIGNING_KEY
+ARG NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
+ARG NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL
+ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL
+ARG SITE_URL
+
 RUN npm run build
 
-# Stage 2: Production image
-FROM node:18-alpine
+# 2. Production Stage
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copy package files and node_modules from builder
+ENV NODE_ENV=production
+# Runtime env vars
+ENV DATABASE_URL=$DATABASE_URL
+ENV CLERK_SECRET_KEY=$CLERK_SECRET_KEY
+ENV GEMINI_API_KEY=$GEMINI_API_KEY
+ENV INNGEST_EVENT_KEY=$INNGEST_EVENT_KEY
+ENV INNGEST_SIGNING_KEY=$INNGEST_SIGNING_KEY
+ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
+ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_SIGN_IN_URL
+ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
+ENV SITE_URL=$SITE_URL
+
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
-
-# Copy build output and public assets
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
-
 CMD ["npm", "start"]
