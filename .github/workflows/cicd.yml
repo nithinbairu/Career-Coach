@@ -6,17 +6,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🧹 Free up disk space early
+      # 🧹 Free up space before build
       - name: Free up disk space
         run: |
-          echo "Cleaning up disk space..."
+          echo "Removing large unused packages..."
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
           docker system prune -af || true
           rm -rf ~/.npm/_cacache
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/lib/android
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
