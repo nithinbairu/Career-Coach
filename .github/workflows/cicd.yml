@@ -1,3 +1,9 @@
+name: Deploy Ai-Career-Coach to AWS EC2
+
+on:
+  push:
+    branches: [ master]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -5,14 +11,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          docker --version
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -37,9 +35,25 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t nithinbairu/ai-career-coach .
-
       - name: Log in to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Push Docker image to Docker Hub
         run: docker push nithinbairu/ai-career-coach:latest
+
+  Deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          docker --version
+      - name: Pull Docker image
+        run: docker pull nithinbairu/ai-career-coach:latest
+      - name: Stop and remove existing Docker container
+        run: docker rm -f ai-career-coach-container
+      - name: Run Docker container
+        run: docker run -d -p 3000:3000 --name ai-career-coach-container nithinbairu/ai-career-coach
